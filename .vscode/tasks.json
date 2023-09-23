@@ -35,6 +35,15 @@
 				"npm: watch-tests"
 			],
 			"problemMatcher": []
-		}
+		},
+    {
+      "type": "shell",
+      "label": "Package into VSIX",
+      "command": "vsce package",
+      "presentation": {
+        "reveal": "always"
+      },
+      "group": "build"
+    },    
 	]
 }

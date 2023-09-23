@@ -82,6 +82,8 @@ function fixupWhitespace()
 // Activation hook.
 export function activate(context: vscode.ExtensionContext) 
 {
+  console.log("NEW VERSION");
+
   // Define the command mappings.
 	let disposable = vscode.commands.registerCommand(
     'emacs-fixup-whitespace.fixupWhitespace', 
