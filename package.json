@@ -1,21 +1,30 @@
 {
   "name": "emacs-fixup-whitespace",
   "displayName": "Emacs fixup-whitespace",
-  "description": "Emulate Emacs fixup-whitespace command.",
-  "version": "0.0.1",
+  "description": "A command to emulate Emacs' fixup-whitespace function to collapse whitespace around the cursor.",
+  "version": "0.1.0",
+  "publisher": "b-spencer",
+  "icon": "fix-ws.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/b-spencer/vscode-emacs-fixup-whitespace"
+  },
   "engines": {
     "vscode": "^1.82.0"
   },
   "categories": [
     "Other"
   ],
+  "extensionKind": [
+    "ui", "workspace"
+  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "emacs-fixup-whitespace.helloWorld",
-        "title": "Hello World"
+        "command": "emacs-fixup-whitespace.fixupWhitespace",
+        "title": "Emacs fixup-whitespace (collapse space around cursor)"
       }
     ]
   },
