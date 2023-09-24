@@ -20,9 +20,6 @@ function fixupWhitespace()
 
   // We build a list of edits, one per selection (i.e. one per cursor).
   let edits: {
-    // The original cursor position, which the API calls `active`.
-    active: vscode.Position;
-
     // The range we need to erase.
     erasure: vscode.Range; 
 
@@ -118,7 +115,7 @@ function fixupWhitespace()
       : " "; 
 
     // Save information about how to perform this edit and where the cursor was.
-    edits.push({active: selection.active, erasure, replacement});
+    edits.push({erasure, replacement});
   }
 
   // Perform all the edits at once.
@@ -187,19 +184,17 @@ function fixupWhitespace()
             editor.selections[i].active.translate(
               // We never move the cursor to a different line.
               0,
-              // We move the cursor to the left iff . . .
-              (
-                // . . we erased more than 1 space . . .
+
+              // We move the cursor to the left iff we erased anything other
+              // than 1 space . . .
                 (edits[i].erasure.end.character 
-                 - edits[i].erasure.start.character) > 1
-                 // . . . and the cursor wasn't at the start of the region we
-                 // erased . . .
-                 && edits[i].active.isAfter(edits[i].erasure.start)
-                 //
-                 // (this means that TextEditor moved the cursor to the end of
-                 // the replacement, at least when our replacement is non-empty)
-              )
-              // . . . and we actually inserted anything.
+              - edits[i].erasure.start.character) !== 1
+              // . . . and we actually inserted anything.  (This second
+              // conditional happens via our replacement.length being zero.)
+              //
+              // Such a condition means that TextEditor moved the cursor to the
+              // end of a non-empty replacement, and we must move it back.
+              //
               ? -(edits[i].replacement.length)
               : 0
             )
