@@ -18,10 +18,14 @@ function fixupWhitespace()
     return;
   }
 
-  console.log("Starting");
-
   // We build a list of edits.
-  let edits: { erasure: vscode.Range; replacement: string }[] = [];
+  let edits: {
+    // The range we need to erase.
+    erasure: vscode.Range; 
+
+    // The replacement (either empty or a single space).
+    replacement: string;
+  }[] = [];
 
   // We build an index of whitespace erasure regions so that we can detect when
   // multiple cursors are sitting in the same regions.  
@@ -49,11 +53,11 @@ function fixupWhitespace()
 
     // Flatten the line so we can operate on it simply.
     const line = editor.document.lineAt(lineRange.start).text;
-    console.log(`Found line: ${line}`);
+    //console.log(`Found line: ${line}`);
 
     // Figure out where the cursor is within that isolated line.
     const cursor = selection.active.character - lineRange.start.character;
-    console.log(`Found pos : ` + " ".repeat(cursor) + "█");
+    //console.log(`Found pos : ` + " ".repeat(cursor) + "█");
 
     // Split the line at the cursor.
     const prefix = line.substring(0, cursor);
@@ -91,12 +95,12 @@ function fixupWhitespace()
     if(already.has(key))
     {
       // Yes.  Skip it.
-      console.log(`Already have ${key}`);
+      //console.log(`Already have ${key}`);
       continue;
     }
 
     // Add it to our index of regions we're planning to erase.
-    console.log(`Found region at ${key}`);
+    //console.log(`Found region at ${key}`);
     already.add(key);
 
     // We replace that erasure region put that back together with a single space
@@ -106,17 +110,19 @@ function fixupWhitespace()
     const replacement = 
       (cursor === 0
        || cursor === lineRange.end.character
-       || prefixTrimSize == prefix.length)       
+       || prefixTrimSize === prefix.length)       
       ? ""
       : " "; 
 
     // Save those to do in a moment.
-    edits.push({erasure, replacement});
+    edits.push({erasure, replacement, prefixTrimSize});
   }
 
   // Perform all the edits at once by running all of the saved functions.
   editor.edit(
     edit => edits.forEach(
+      // Replace the spaces (maybe empty) with our replacement (maybe empty, but
+      // not at the same time that `erasure` is empty).
       args => { edit.replace(args.erasure, args.replacement); }
     )
   )
@@ -133,11 +139,15 @@ function fixupWhitespace()
 
       // Yes.  Consider whether we need to adjust the cursor.
       //
-      // The cursor at _least_ at the start of the erasure range that we just
-      // replaces, so the TextEditor adjusted its position for us to the end of
-      // the replacement text, which is either empty or a space.  We want to be
-      // at the _beginning_ of that replacement text, so if the replacement is
-      // of non-zero size, move it back one space.
+      // The cursor was at _least_ at the start of the erasure range that we
+      // just replaced.  When the cursor was _after_ the start of the erasure
+      // range (i.e. within it), the TextEditor adjusted its position for us to
+      // the end of the replacement text.
+      //
+      // We want to be at the _beginning_ of that replacement text (even if that
+      // replacement text was empty), so if we replaced more than one space with
+      // one space (vs. nothing), then move it back that one space so the cursor
+      // is sitting on it.
       //
       // To adjust individual cursor positions, we must set them all.  So we do.
       //
@@ -171,9 +181,12 @@ function fixupWhitespace()
             editor.selections[i].active.translate(
               // Same line.
               0,
-              // Move the cursor iff we inserted some space (to the start of
-              // that space).
-              -(edits[i].replacement.length)
+              // Move the cursor iff we erased more than 1 space . . .
+              (edits[i].erasure.end.character 
+                - edits[i].erasure.start.character) > 1
+              // . . . and we actually inserted anything.
+              ? -(edits[i].replacement.length)
+              : 0
             )
           )
         );
@@ -193,30 +206,11 @@ function fixupWhitespace()
         );
     }
   );
-
-  //   // Now that the cursor is in the right place, replace the line.
-  //   editor.edit(edit => edit.replace(lineRange, replacement));
-
-  //   // Remember that new cursor in a replacement selections array.
-  //   newSelections.push(
-  //     new vscode.Selection(
-  //       // This eliminates any selection region by putting the anchor and active
-  //       // positions in the same place.
-  //       newCursorPosition,
-  //       newCursorPosition
-  //     )
-  //   );
-  // }
-
-  // // And set the new cursor positions.
-  // editor.selections = newSelections;
 }
 
 // Activation hook.
 export function activate(context: vscode.ExtensionContext) 
 {
-  console.log("HELLO THERE");
-
   // Define the command mappings.
 	let disposable = vscode.commands.registerCommand(
     'emacs-fixup-whitespace.fixupWhitespace', 
