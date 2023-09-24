@@ -208,7 +208,8 @@ function fixupWhitespace()
 
     // onRejected.
     reason => {
-      // Assume it's because of overlapping regions.
+      // We must have assembled an invalid package of edit operations.  This
+      // shouldn't happen.  If it does, we have a bug.
       vscode.window.showWarningMessage(
         // The user can see our extension identity if they want to, but we
         // repeat it here so it's clearer what is going on.
