@@ -18,8 +18,11 @@ function fixupWhitespace()
     return;
   }
 
-  // We build a list of edits.
+  // We build a list of edits, one per selection (i.e. one per cursor).
   let edits: {
+    // The original cursor position, which the API calls `active`.
+    active: vscode.Position;
+
     // The range we need to erase.
     erasure: vscode.Range; 
 
@@ -114,11 +117,11 @@ function fixupWhitespace()
       ? ""
       : " "; 
 
-    // Save those to do in a moment.
-    edits.push({erasure, replacement, prefixTrimSize});
+    // Save information about how to perform this edit and where the cursor was.
+    edits.push({active: selection.active, erasure, replacement});
   }
 
-  // Perform all the edits at once by running all of the saved functions.
+  // Perform all the edits at once.
   editor.edit(
     edit => edits.forEach(
       // Replace the spaces (maybe empty) with our replacement (maybe empty, but
@@ -139,19 +142,23 @@ function fixupWhitespace()
 
       // Yes.  Consider whether we need to adjust the cursor.
       //
-      // The cursor was at _least_ at the start of the erasure range that we
-      // just replaced.  When the cursor was _after_ the start of the erasure
-      // range (i.e. within it), the TextEditor adjusted its position for us to
-      // the end of the replacement text.
+      // The cursor was in the erasure range.  Sometimes, TextEditor will move
+      // the cursor for us, such as when our replace operation removes the
+      // character that the cursor was on (without replacing it with a new one).
+      // When it does, it will put the cursor at the end of the replacement.
       //
-      // We want to be at the _beginning_ of that replacement text (even if that
-      // replacement text was empty), so if we replaced more than one space with
-      // one space (vs. nothing), then move it back that one space so the cursor
-      // is sitting on it.
+      // Other times, it will leave the cursor alone, or it will end up putting
+      // the cursor where we want it.
       //
-      // To adjust individual cursor positions, we must set them all.  So we do.
+      // And, if two cursors end up in the same place, TextEditor removes the
+      // second one (as ordered by our iteration through the selections, it
+      // seems).
       //
-      // But first, do we properly know how many selections (cursors) there are?
+      // We must consider each of the replacements that we made, which should
+      // represent each of the remaining cursors.  
+      //
+      // So, do we properly know how many selections (cursors) there are?
+      //
       if(editor.selections.length !== edits.length)
       {
         // No.  Oh.  Better leave the cursors alone then.  At least mention this
@@ -163,27 +170,35 @@ function fixupWhitespace()
         return;
       }
 
-      // Looks good.  Let's build the new list by building a new selections
-      // array containing adjusted values from the old list.  
-      //
-      // We need to make a new array because `editor.selections` is readonly.
-      // And the simplest way to do that is to just make new Selection objects.
-      // 
+      // Yes.  To move any cursor, we must set the entire selections array at
+      // once.  We need to make a brand new new array because
+      // `editor.selections` is readonly.  And the simplest way to populate that
+      // new array  is to just make new Selection objects.  So we do that.
       let newSelections: vscode.Selection[] = [];
       for(let i = 0; i < editor.selections.length; ++i)
       {
         newSelections.push(
           new vscode.Selection(
-            // Leave the anchor unchanged.
+            // Leave the anchor unchanged.  This means that the selections that
+            // the user had (to extant cursors) remain intact.
             editor.selections[i].anchor,
 
-            // Adjust the active position as needed.
+            // Adjust the active cursor position as needed.
             editor.selections[i].active.translate(
-              // Same line.
+              // We never move the cursor to a different line.
               0,
-              // Move the cursor iff we erased more than 1 space . . .
-              (edits[i].erasure.end.character 
-                - edits[i].erasure.start.character) > 1
+              // We move the cursor to the left iff . . .
+              (
+                // . . we erased more than 1 space . . .
+                (edits[i].erasure.end.character 
+                 - edits[i].erasure.start.character) > 1
+                 // . . . and the cursor wasn't at the start of the region we
+                 // erased . . .
+                 && edits[i].active.isAfter(edits[i].erasure.start)
+                 //
+                 // (this means that TextEditor moved the cursor to the end of
+                 // the replacement, at least when our replacement is non-empty)
+              )
               // . . . and we actually inserted anything.
               ? -(edits[i].replacement.length)
               : 0
