@@ -6,12 +6,6 @@ function warn(message: string)
   vscode.window.showInformationMessage(message);
 }
 
-// To make it easy to disable console logging.
-function log(message: string)
-{
-  console.log(message);
-}
-
 // The command itself.
 function fixupWhitespace() 
 {
@@ -24,7 +18,7 @@ function fixupWhitespace()
     return;
   }
 
-  log("Starting");
+  console.log("Starting");
 
   // We build a list of edits.
   let edits: { erasure: vscode.Range; replacement: string }[] = [];
@@ -55,11 +49,11 @@ function fixupWhitespace()
 
     // Flatten the line so we can operate on it simply.
     const line = editor.document.lineAt(lineRange.start).text;
-    log(`Found line: ${line}`);
+    console.log(`Found line: ${line}`);
 
     // Figure out where the cursor is within that isolated line.
     const cursor = selection.active.character - lineRange.start.character;
-    log(`Found pos : ` + " ".repeat(cursor) + "█");
+    console.log(`Found pos : ` + " ".repeat(cursor) + "█");
 
     // Split the line at the cursor.
     const prefix = line.substring(0, cursor);
@@ -97,12 +91,12 @@ function fixupWhitespace()
     if(already.has(key))
     {
       // Yes.  Skip it.
-      log(`Already have ${key}`);
+      console.log(`Already have ${key}`);
       continue;
     }
 
     // Add it to our index of regions we're planning to erase.
-    log(`Found region at ${key}`);
+    console.log(`Found region at ${key}`);
     already.add(key);
 
     // We replace that erasure region put that back together with a single space
@@ -110,7 +104,9 @@ function fixupWhitespace()
     // removed the entire prefix.  (Note that we've deleted any whitespace that
     // was sitting under the cursor.)
     const replacement = 
-      (cursor === 0 || prefix.length === 0 || cursor === lineRange.end.character)
+      (cursor === 0
+       || cursor === lineRange.end.character
+       || prefixTrimSize == prefix.length)       
       ? ""
       : " "; 
 
@@ -120,9 +116,9 @@ function fixupWhitespace()
 
   // Perform all the edits at once by running all of the saved functions.
   editor.edit(
-    edit => edits.forEach(args => {
-      edit.replace(args.erasure, args.replacement);
-    })
+    edit => edits.forEach(
+      args => { edit.replace(args.erasure, args.replacement); }
+    )
   )
   .then(
     // onFullfilled.
@@ -143,7 +139,42 @@ function fixupWhitespace()
       // at the _beginning_ of that replacement text, so if the replacement is
       // of non-zero size, move it back one space.
       //
-      // TODO:
+      // To adjust individual cursor positions, we must set them all.  So we do.
+      //
+      // Do we properly know how many selections (cursors) there are?
+      if(editor.selections.length !== edits.length)
+      {
+        // No.  Oh.  Better leave the cursors alone then.
+        vscode.window.showInformationMessage(
+          `Not adjusting cursors: saw ${editor.selections.length} expected `
+          + edits.length
+        );
+        return;
+      }
+
+      // Looks good.  Let's build the new list by adjusting the old list.
+      let newSelections: vscode.Selection[] = [];
+      for(let i = 0; i < editor.selections.length; ++i)
+      {
+        newSelections.push(
+          new vscode.Selection(
+            // Leave the anchor unchanged.
+            editor.selections[i].anchor,
+
+            // Adjust the active position as needed.
+            editor.selections[i].active.translate(
+              // Same line.
+              0,
+              // Move the cursor iff we inserted some space (to the start of
+              // that space).
+              -(edits[i].replacement.length)
+            )
+          )
+        );
+      }
+      
+      // Set 'em.
+      editor.selections = newSelections;
     },
 
     // onRejected.
@@ -178,7 +209,7 @@ function fixupWhitespace()
 // Activation hook.
 export function activate(context: vscode.ExtensionContext) 
 {
-  log("HELLO THERE");
+  console.log("HELLO THERE");
 
   // Define the command mappings.
 	let disposable = vscode.commands.registerCommand(
