@@ -141,10 +141,11 @@ function fixupWhitespace()
       //
       // To adjust individual cursor positions, we must set them all.  So we do.
       //
-      // Do we properly know how many selections (cursors) there are?
+      // But first, do we properly know how many selections (cursors) there are?
       if(editor.selections.length !== edits.length)
       {
-        // No.  Oh.  Better leave the cursors alone then.
+        // No.  Oh.  Better leave the cursors alone then.  At least mention this
+        // to the user.
         vscode.window.showInformationMessage(
           `Not adjusting cursors: saw ${editor.selections.length} expected `
           + edits.length
@@ -152,7 +153,12 @@ function fixupWhitespace()
         return;
       }
 
-      // Looks good.  Let's build the new list by adjusting the old list.
+      // Looks good.  Let's build the new list by building a new selections
+      // array containing adjusted values from the old list.  
+      //
+      // We need to make a new array because `editor.selections` is readonly.
+      // And the simplest way to do that is to just make new Selection objects.
+      // 
       let newSelections: vscode.Selection[] = [];
       for(let i = 0; i < editor.selections.length; ++i)
       {
@@ -173,7 +179,7 @@ function fixupWhitespace()
         );
       }
       
-      // Set 'em.
+      // Set 'em all at once.
       editor.selections = newSelections;
     },
 
