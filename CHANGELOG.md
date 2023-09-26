@@ -2,8 +2,11 @@
 
 All notable changes to the "emacs-fixup-whitespace" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [1.0.1]
 
-## [Unreleased]
+- Fixed cursor position after running `fixup-whitespace` from the first
+  non-space character after a single space character.
+  
+## [1.0.0]
 
 - Initial release

@@ -39,6 +39,10 @@ function fixupWhitespace()
 
     // The replacement (either empty or a single space).
     replacement: string;
+
+    // How long was the prefix part that we're erasing?  We need this to fix the
+    // cursor position in a quirky edge case.
+    prefixTrimSize: number;
   }[] = [];
 
   // We build an index of whitespace erasure regions so that we can detect when
@@ -129,7 +133,7 @@ function fixupWhitespace()
       : " "; 
 
     // Save information about how to perform this edit and where the cursor was.
-    edits.push({erasure, replacement});
+    edits.push({erasure, replacement, prefixTrimSize});
   }
 
   // Perform all the edits at once.
@@ -201,8 +205,13 @@ function fixupWhitespace()
 
               // We move the cursor to the left iff we erased anything other
               // than 1 space . . .
+              (
                 (edits[i].erasure.end.character 
-              - edits[i].erasure.start.character) !== 1
+                - edits[i].erasure.start.character) !== 1
+              // . . . or we erased exactly 1 character and it was all in the
+              // prefix (a quirky special case) . . .
+                || edits[i].prefixTrimSize === 1
+              )
               // . . . and we actually inserted anything.  (This second
               // conditional happens via our replacement.length being zero.)
               //

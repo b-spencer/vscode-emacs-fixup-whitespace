@@ -46,10 +46,3 @@ You must manually add a key binding for the new command.  For example:
 ## Known Issues
 
 Please report any bugs.
-
-## Release Notes
-
-### 1.0.0
-
-Initial release.
-
