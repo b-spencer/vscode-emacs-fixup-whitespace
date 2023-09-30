@@ -64,6 +64,21 @@ async function runSingleLine(
   );
 }
 
+// Check that there is one cursor position and it is `line` at `character`, with
+// no region selected.
+function checkCursor(
+  editor: vscode.TextEditor, 
+  line: vscode.TextLine, 
+  character: number): boolean
+{
+  const lineIndex = line.range.start.line;
+  assert.strictEqual(editor.selections.length, 1);
+  const selection = editor.selections[0];
+  assert.strictEqual(selection.active.line, lineIndex);
+  assert.strictEqual(selection.active.character, character);
+  return true;
+}
+
 //------------------------------------------------------------------------------
 // Simple test cases.
 
@@ -90,36 +105,42 @@ suite('simple', () => {
       const line = editor.document.lineAt(new vscode.Position(0, 0));
       assert.strictEqual(line.text, orig[0]);
       const start = line.range.start;
+      const lineIndex = line.range.start.line;
 
       // Running the command at the start has no effecct.
       assert.strictEqual(
         await runSingleLine(editor, start),
         line.text
       );
+      assert.ok(checkCursor(editor, line, 0));
 
       // Running the command at the end has no effect.
       assert.strictEqual(
         await runSingleLine(editor, line.range.end),
         line.text
       );
+      assert.ok(checkCursor(editor, line, line.range.end.character));
 
       // Running the command in the first space has no effect.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 5)),
         line.text
       );
+      assert.ok(checkCursor(editor, line, 5));
       
       // Running it in the first space of the long part works.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 18)),
+        await runSingleLine(editor, start.translate(0, 17)),
         fixed[0]
       );
+      assert.ok(checkCursor(editor, line, 17));
 
       // Running it again in the same position makes no difference.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 18)),
+        await runSingleLine(editor, start.translate(0, 17)),
         fixed[0]
       );
+      assert.ok(checkCursor(editor, line, 17));
     }
 
     // line 2
@@ -129,17 +150,20 @@ suite('simple', () => {
       assert.strictEqual(line.text, orig[0]);
       const start = line.range.start;
 
-      // Running it in the second space of the long part works.
-      assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 19)),
-        fixed[0]
-      );
-
-      // Running it again in the single space works.
+      // Running it in the second space of the long part works, but moves the
+      // cursor back.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 18)),
         fixed[0]
       );
+      assert.ok(checkCursor(editor, line, 17));
+
+      // Running it again in the single space works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
     }
   });
 });
