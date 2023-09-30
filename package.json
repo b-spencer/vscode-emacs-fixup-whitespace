@@ -30,10 +30,6 @@
       {
         "command": "emacs-fixup-whitespace.fixupWhitespace",
         "title": "Emacs fixup-whitespace (collapse space around cursor)"
-      },
-      {
-        "command": "emacs-fixup-whitespace.testCommand",
-        "title": "TODO: REMOVE"
       }
     ]
   },

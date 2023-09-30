@@ -26,19 +26,7 @@ function makePromise<T>(value: T)
   return new Promise<T>((resolve) => resolve(value));
 }
 
-// TODO: REMOVE
-function testCommand(): Promise<string>
-{
-  console.log("Running test command");
-  return new Promise<string>(
-    (resolve, reject) => {
-      console.log("running promise function");
-      resolve("my string");
-    }
-  );
-}
-
-// The command itself.
+// The command itself.  This returns true iff it worked.
 function fixupWhitespace(): Thenable<boolean> 
 {
   // Get the current editor.
@@ -278,13 +266,6 @@ export function activate(context: vscode.ExtensionContext)
   );
 
   // Provide the commands to the context.
-  context.subscriptions.push(disposable);
-
-  // TODO: REMOVE
-  disposable = vscode.commands.registerCommand(
-    'emacs-fixup-whitespace.testCommand', 
-    () => { return testCommand(); }
-  );
   context.subscriptions.push(disposable);
 }
 

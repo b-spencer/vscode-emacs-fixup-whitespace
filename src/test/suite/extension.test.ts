@@ -69,9 +69,9 @@ async function runSingleLine(
 
 suite('simple', () => {
 
-  test('begin none', async () => {
+  test('line 1', async () => {
     const editor = await openTestFile("simple.txt");
-    
+
     // Get the first line as-is.
     const line = editor.document.lineAt(new vscode.Position(0, 0));
     assert.strictEqual(line.text, "There is too much            space here.");
@@ -102,14 +102,10 @@ suite('simple', () => {
       fixed
     );
 
+    // Running it again in the same position makes no difference.
+    assert.strictEqual(
+      await runSingleLine(editor, start.translate(0, 18)),
+      fixed
+    );
   });
 });
-
-// suite('Extension Test Suite', () => {
-// 	vscode.window.showInformationMessage('Start all tests.');
-
-// 	test('Sample test', () => {
-// 		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-// 		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
-// 	});
-// });
