@@ -115,6 +115,12 @@ suite('simple', () => {
         line.text
       );
       assert.ok(checkCursor(editor, line, 0));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start),
+        line.text
+      );
+      assert.ok(checkCursor(editor, line, 0));
 
       // Running the command at the end has no effect.
       assert.strictEqual(
@@ -122,8 +128,20 @@ suite('simple', () => {
         line.text
       );
       assert.ok(checkCursor(editor, line, line.range.end.character));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, line.range.end),
+        line.text
+      );
+      assert.ok(checkCursor(editor, line, line.range.end.character));
 
       // Running the command in the first space has no effect.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 5)),
+        line.text
+      );
+      assert.ok(checkCursor(editor, line, 5));
+      // Repeat.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 5)),
         line.text
@@ -161,6 +179,12 @@ suite('simple', () => {
       assert.ok(checkCursor(editor, line, 17));
 
       // Running it again in the single space works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+      // Repeat.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 17)),
         fixed[0]
