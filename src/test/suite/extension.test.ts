@@ -60,29 +60,17 @@ async function runSingleLine(
 }
 
 // Check that there is one cursor position in `editor` and it is `line` at
-// `character`, with no region selected.  Iff requested, this will `normalize`
-// the position.
+// `character`, with no region selected.
 function checkCursor(
   editor: vscode.TextEditor, 
   line: vscode.TextLine, 
-  character: number,
-  normalize?: boolean): boolean
+  character: number): boolean
 {
   // There's exactly one selection.
   assert.strictEqual(editor.selections.length, 1);
 
   // Get the primary selection.
-  let selection = editor.selections[0];
-
-  // If told to, normalize the position, since sometimes VS Code's edit
-  // operation will leave the position off the end of the line.
-  if(normalize)
-  {
-    selection = new vscode.Selection(
-      editor.document.validatePosition(selection.anchor),
-      editor.document.validatePosition(selection.active)
-    );
-  }
+  const selection = editor.selections[0];
 
   // For brevity.
   const lineIndex = line.range.start.line;
