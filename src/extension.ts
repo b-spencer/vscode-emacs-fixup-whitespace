@@ -77,11 +77,11 @@ function fixupWhitespace(): Thenable<boolean>
 
     // Flatten the line so we can operate on it simply.
     const line = editor.document.lineAt(lineRange.start).text;
-    //console.log(`Found line: ${line}`);
+    console.log(`Found line: "${line}"`);
 
     // Figure out where the cursor is within that isolated line.
     const cursor = selection.active.character - lineRange.start.character;
-    //console.log(`Found pos : ` + " ".repeat(cursor) + "█");
+    console.log(`Found pos :  ` + " ".repeat(cursor) + "█");
 
     // Split the line at the cursor.
     const prefix = line.substring(0, cursor);

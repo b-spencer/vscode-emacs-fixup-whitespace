@@ -105,6 +105,16 @@ suite('single cursor', () => {
     // existing document?
     const editor = await openTestFile("simple.txt");
 
+    // Return the line at `index`.
+    //
+    // It's important to re-fetch the line after ever modification for proper
+    // testing.  The cursor positions move around during the edits.
+    //
+    function lineAt(index: number): vscode.TextLine
+    {
+      return editor.document.lineAt(new vscode.Position(index, 0));
+    }
+
     // The original lines.
     const orig = [
       // Lines 1 through 4.
@@ -128,6 +138,8 @@ suite('single cursor', () => {
       // Lines 13 through 15.
       "This has space after it.",
     ];
+
+    // TODO: FIX by using line() always.
 
     // Line 1: Start, end no-ops and first space of multiple.
     {
@@ -440,87 +452,81 @@ suite('single cursor', () => {
     // Line 12: A line with spaces at the start from the past-the-last space.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(11, 0));
-      assert.strictEqual(line.text, orig[2]);
-      const start = line.range.start;
+      const line = () => lineAt(11);
+      assert.strictEqual(line().text, orig[2]);
 
       // From the past-last-space position.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 6)),
+        await runSingleLine(editor, line().range.start.translate(0, 6)),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 13: A line with spaces at the end from the end of the line.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(12, 0));
-      assert.strictEqual(line.text, orig[3]);
-      const start = line.range.end;
+      const line = () => lineAt(12);
+      assert.strictEqual(line().text, orig[3]);
 
-      // From the end of the line.
+      // From the end of the line().
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end),
+        await runSingleLine(editor, line().range.end),
         fixed[3]
       );
-      assert.ok(checkCursor(editor, line, 24));
+      assert.ok(checkCursor(editor, line(), 24));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 24)),
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
         fixed[3]
       );
-      // We need to normalize the line position VS Code itself computes in this
-      // case.  It's not clear why it gets it wrong.
-      assert.ok(checkCursor(editor, line, 24, true));
+      assert.ok(checkCursor(editor, line(), 24));
     }
 
     // Line 14: A line with spaces at the end from the last space on the line.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(13, 0));
-      assert.strictEqual(line.text, orig[3]);
-      const start = line.range.end;
+      const line = () => lineAt(13);
+      assert.strictEqual(line().text, orig[3]);
 
       // From the last space.
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end.translate(0, -1)),
+        await runSingleLine(editor, line().range.end.translate(0, -1)),
         fixed[3]
       );
-      assert.ok(checkCursor(editor, line, 24));
+      assert.ok(checkCursor(editor, line(), 24));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 24)),
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
         fixed[3]
       );
-      assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+      assert.ok(checkCursor(editor, line(), 24));
     }
 
     // Line 15: A line with spaces at the end from the middle of those spaces.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(14, 0));
-      assert.strictEqual(line.text, orig[3]);
-      const start = line.range.end;
+      const line = () => lineAt(14);
+      assert.strictEqual(line().text, orig[3]);
 
       // From the not-the-last space.
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end.translate(0, -3)),
+        await runSingleLine(editor, line().range.end.translate(0, -3)),
         fixed[3]
       );
-      assert.ok(checkCursor(editor, line, 24));
+      assert.ok(checkCursor(editor, line(), 24));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 24)),
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
         fixed[3]
       );
-      assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+      assert.ok(checkCursor(editor, line(), 24));
     }
 
     // Line 16: A line with spaces at the end from the first of those spaces.
