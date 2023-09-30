@@ -212,12 +212,6 @@ function fixupWhitespace(): Thenable<boolean>
         const selection = editor.selections[i];
 
         // Adjust the active cursor position as needed.
-        //
-        // We don't call TextDocument.validatePosition() on this.  If VS Code
-        // has left the position in an invalid position, it'll be off the end of
-        // the line, in which case we're not moving the cursor anyway.  We
-        // assume it has good reason for doing so, and leave it alone.
-        //
         const active = selection.active.translate(
           // We never move the cursor to a different line.
           0,
