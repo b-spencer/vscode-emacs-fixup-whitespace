@@ -69,43 +69,45 @@ async function runSingleLine(
 
 suite('simple', () => {
 
-  test('line 1', async () => {
+  test('pass 1', async () => {
     const editor = await openTestFile("simple.txt");
 
     // Get the first line as-is.
-    const line = editor.document.lineAt(new vscode.Position(0, 0));
-    assert.strictEqual(line.text, "There is too much            space here.");
-    const start = line.range.start;
+    {
+      const line = editor.document.lineAt(new vscode.Position(0, 0));
+      assert.strictEqual(line.text, "There is too much            space here.");
+      const start = line.range.start;
 
-    // Running the command at the start has no effecct.
-    assert.strictEqual(
-      await runSingleLine(editor, start),
-      line.text
-    );
+      // Running the command at the start has no effecct.
+      assert.strictEqual(
+        await runSingleLine(editor, start),
+        line.text
+      );
 
-    // Running the command at the end has no effect.
-    assert.strictEqual(
-      await runSingleLine(editor, line.range.end),
-      line.text
-    );
+      // Running the command at the end has no effect.
+      assert.strictEqual(
+        await runSingleLine(editor, line.range.end),
+        line.text
+      );
 
-    // Running the command in the first space has no effect.
-    assert.strictEqual(
-      await runSingleLine(editor, start.translate(0, 5)),
-      line.text
-    );
-    
-    // Running it in the first space of the long part works.
-    const fixed = "There is too much space here.";
-    assert.strictEqual(
-      await runSingleLine(editor, start.translate(0, 18)),
-      fixed
-    );
+      // Running the command in the first space has no effect.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 5)),
+        line.text
+      );
+      
+      // Running it in the first space of the long part works.
+      const fixed = "There is too much space here.";
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 18)),
+        fixed
+      );
 
-    // Running it again in the same position makes no difference.
-    assert.strictEqual(
-      await runSingleLine(editor, start.translate(0, 18)),
-      fixed
-    );
+      // Running it again in the same position makes no difference.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 18)),
+        fixed
+      );
+    }
   });
 });
