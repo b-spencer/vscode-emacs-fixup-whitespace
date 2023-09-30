@@ -215,6 +215,8 @@ function fixupWhitespace(): Thenable<boolean>
               (edit.erasure.end.character - edit.erasure.start.character) !== 1
               && edit.prefixTrimSize !== 0
             )
+            // . . . or we didn't erase anything (and inserted a space) . . .
+            || edit.erasure.isEmpty
             // . . . or we erased exactly 1 character and it was all in the
             // prefix (a quirky special case) . . .
             || edit.prefixTrimSize === 1
