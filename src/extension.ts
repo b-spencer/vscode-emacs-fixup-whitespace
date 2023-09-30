@@ -204,10 +204,14 @@ function fixupWhitespace()
               0,
 
               // We move the cursor to the left iff we erased anything other
-              // than 1 space . . .
+              // than 1 space (when the cursor wasn't sitting on the first
+              // erased space [a quirk, since it's still there now]) . . .
               (
-                (edits[i].erasure.end.character 
-                - edits[i].erasure.start.character) !== 1
+                (
+                  (edits[i].erasure.end.character 
+                  - edits[i].erasure.start.character) !== 1
+                  && edits[i].prefixTrimSize !== 0
+                )
               // . . . or we erased exactly 1 character and it was all in the
               // prefix (a quirky special case) . . .
                 || edits[i].prefixTrimSize === 1
