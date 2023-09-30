@@ -1,11 +1,6 @@
 import * as assert from 'assert';
-import { setMaxIdleHTTPParsers } from 'http';
 import * as path from 'path';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
 
 // Where are our test documents?
 const testFilesDir = path.join(
@@ -87,6 +82,8 @@ function checkCursor(
 suite('simple', () => {
 
   test('pass 1', async () => {
+    // TODO: Can we do this for the suite and then make each test case use the
+    // existing document?
     const editor = await openTestFile("simple.txt");
 
     // The original lines.
@@ -101,7 +98,7 @@ suite('simple', () => {
       "There is too much space here."
     ];
 
-    // line 1
+    // Line 1: Start, end no-ops and first space of multiple.
     {
       // Get the line.
       const line = editor.document.lineAt(new vscode.Position(0, 0));
@@ -163,7 +160,7 @@ suite('simple', () => {
       assert.ok(checkCursor(editor, line, 17));
     }
 
-    // line 2
+    // Line 2: second space of multiple.
     {
       // Get the line.
       const line = editor.document.lineAt(new vscode.Position(1, 0));
@@ -174,6 +171,62 @@ suite('simple', () => {
       // cursor back.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 18)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+
+      // Running it again in the single space works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+    }
+
+    // Line 3: last space of multiple.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(2, 0));
+      assert.strictEqual(line.text, orig[0]);
+      const start = line.range.start;
+
+      // Run it from the last space of many.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 28)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+
+      // Running it again in the single space works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 17)),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line, 17));
+    }
+
+    // Line 4: one-past-the-last space of multiple.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(3, 0));
+      assert.strictEqual(line.text, orig[0]);
+      const start = line.range.start;
+
+      // Run it from the one-past-the-last space of many.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 29)),
         fixed[0]
       );
       assert.ok(checkCursor(editor, line, 17));
