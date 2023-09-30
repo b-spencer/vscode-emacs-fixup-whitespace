@@ -59,20 +59,39 @@ async function runSingleLine(
   );
 }
 
-// Check that there is one cursor position and it is `line` at `character`, with
-// no region selected.
+// Check that there is one cursor position in `editor` and it is `line` at
+// `character`, with no region selected.  Iff requested, this will `normalize`
+// the position.
 function checkCursor(
   editor: vscode.TextEditor, 
   line: vscode.TextLine, 
-  character: number): boolean
+  character: number,
+  normalize?: boolean): boolean
 {
-  const lineIndex = line.range.start.line;
+  // There's exactly one selection.
   assert.strictEqual(editor.selections.length, 1);
-  const selection = editor.selections[0];
-  assert.strictEqual(selection.active.line, lineIndex);
-  assert.strictEqual(selection.active.character, character);
-  assert.strictEqual(selection.anchor.line, lineIndex);
-  assert.strictEqual(selection.anchor.character, character);
+
+  // Get the primary selection.
+  let selection = editor.selections[0];
+
+  // If told to, normalize the position, since sometimes VS Code's edit
+  // operation will leave the position off the end of the line.
+  if(normalize)
+  {
+    selection = new vscode.Selection(
+      editor.document.validatePosition(selection.anchor),
+      editor.document.validatePosition(selection.active)
+    );
+  }
+
+  // For brevity.
+  const lineIndex = line.range.start.line;
+
+  // Check 'em.
+  assert.strictEqual(selection.active.line, lineIndex, "active line");
+  assert.strictEqual(selection.active.character, character, "active char");
+  assert.strictEqual(selection.anchor.line, lineIndex), "anchor line";
+  assert.strictEqual(selection.anchor.character, character, "anchor char");
   return true;
 }
 
@@ -439,20 +458,27 @@ suite('single cursor', () => {
       assert.ok(checkCursor(editor, line, 0));
     }
 
-    // Line 13: A line with spaces at the end from the last such space.
+    // Line 13: A line with spaces at the end from the end of the line.
     {
       // Get the line.
       const line = editor.document.lineAt(new vscode.Position(12, 0));
       assert.strictEqual(line.text, orig[3]);
-      const end = line.range.end;
+      const start = line.range.end;
 
-      // From the first trailing space position.
+      // From the end of the line.
       assert.strictEqual(
-        await runSingleLine(editor, end),
+        await runSingleLine(editor, line.range.end),
         fixed[3]
       );
       assert.ok(checkCursor(editor, line, 24));
       // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 24)),
+        fixed[3]
+      );
+      // We need to normalize the line position VS Code itself computes in this
+      // case.  It's not clear why it gets it wrong.
+      assert.ok(checkCursor(editor, line, 24, true));
     }
   });
 });

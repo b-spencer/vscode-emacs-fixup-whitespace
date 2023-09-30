@@ -128,13 +128,22 @@ function fixupWhitespace(): Thenable<boolean>
     already.add(key);
 
     // We replace that erasure region put that back together with a single space
-    // character, unless the cursor is at the start or end of the line, or we
-    // removed the entire prefix.  (Note that we've deleted any whitespace that
-    // was sitting under the cursor.)
+    // character, unless:
+    // 
+    //  - the cursor is at the start or end of the line, or
+    //
+    //  - we removed the entire prefix or suffix, since this means that
+    //    everything from the cursor to the start or end of the line was
+    //    whitespace, in which case we trim whitespace.
+    //
+    // (Note that we've deleted any whitespace that was sitting under the
+    // cursor.)
+    //
     const replacement = 
       (cursor === 0
        || cursor === lineRange.end.character
-       || prefixTrimSize === prefix.length)       
+       || prefixTrimSize === prefix.length
+       || suffixTrimSize === suffix.length)
       ? ""
       : " "; 
 
@@ -203,6 +212,12 @@ function fixupWhitespace(): Thenable<boolean>
         const selection = editor.selections[i];
 
         // Adjust the active cursor position as needed.
+        //
+        // We don't call TextDocument.validatePosition() on this.  If VS Code
+        // has left the position in an invalid position, it'll be off the end of
+        // the line, in which case we're not moving the cursor anyway.  We
+        // assume it has good reason for doing so, and leave it alone.
+        //
         const active = selection.active.translate(
           // We never move the cursor to a different line.
           0,
