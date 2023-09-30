@@ -532,22 +532,21 @@ suite('single cursor', () => {
     // Line 16: A line with spaces at the end from the first of those spaces.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(15, 0));
-      assert.strictEqual(line.text, orig[3]);
-      const start = line.range.end;
+      const line = () => lineAt(15);
+      assert.strictEqual(line().text, orig[3]);
 
-      // // From the first such space.
-      // assert.strictEqual(
-      //   await runSingleLine(editor, start.translate(0, 24)),
-      //   fixed[3]
-      // );
-      // assert.ok(checkCursor(editor, line, 24));
-      // // Repeat.
-      // assert.strictEqual(
-      //   await runSingleLine(editor, start.translate(0, 24)),
-      //   fixed[3]
-      // );
-      // assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+      // From the first such space.
+      assert.strictEqual(
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line(), 24));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line(), 24));
     }
   });
 });
