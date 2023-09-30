@@ -72,10 +72,23 @@ suite('simple', () => {
   test('pass 1', async () => {
     const editor = await openTestFile("simple.txt");
 
-    // Get the first line as-is.
+    // The original lines.
+    const orig = [
+      // 1 through 4.
+      "There is too much            space here."
+    ];
+
+    // The fixed lines.
+    const fixed = [
+      // 1 through 4.
+      "There is too much space here."
+    ];
+
+    // line 1
     {
+      // Get the line.
       const line = editor.document.lineAt(new vscode.Position(0, 0));
-      assert.strictEqual(line.text, "There is too much            space here.");
+      assert.strictEqual(line.text, orig[0]);
       const start = line.range.start;
 
       // Running the command at the start has no effecct.
@@ -97,16 +110,35 @@ suite('simple', () => {
       );
       
       // Running it in the first space of the long part works.
-      const fixed = "There is too much space here.";
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 18)),
-        fixed
+        fixed[0]
       );
 
       // Running it again in the same position makes no difference.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 18)),
-        fixed
+        fixed[0]
+      );
+    }
+
+    // line 2
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(1, 0));
+      assert.strictEqual(line.text, orig[0]);
+      const start = line.range.start;
+
+      // Running it in the second space of the long part works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 19)),
+        fixed[0]
+      );
+
+      // Running it again in the single space works.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 18)),
+        fixed[0]
       );
     }
   });
