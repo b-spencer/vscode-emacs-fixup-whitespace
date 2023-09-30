@@ -151,7 +151,7 @@ function fixupWhitespace(): Thenable<boolean>
     )
   )
   .then(
-    // onFullfilled.
+    // onFulfilled.
     success => {
       // Did it work?
       if(!success)
