@@ -20,8 +20,26 @@ function warn(message: string)
   vscode.window.showInformationMessage(message);
 }
 
+// Make a synchronous value `value` into a Promise that will resolve to it.
+function makePromise<T>(value: T)
+{
+  return new Promise<T>((resolve) => resolve(value));
+}
+
+// TODO: REMOVE
+function testCommand(): Promise<string>
+{
+  console.log("Running test command");
+  return new Promise<string>(
+    (resolve, reject) => {
+      console.log("running promise function");
+      resolve("my string");
+    }
+  );
+}
+
 // The command itself.
-function fixupWhitespace() 
+function fixupWhitespace(): Thenable<boolean> 
 {
   // Get the current editor.
   const editor = vscode.window.activeTextEditor;
@@ -29,7 +47,7 @@ function fixupWhitespace()
   {
     // There isn't one?
     warn("Can't fixup-whitespace without active editor!");
-    return;
+    return makePromise(false);
   }
 
   // We build a list of edits, one per selection (i.e. one per cursor).
@@ -137,7 +155,7 @@ function fixupWhitespace()
   }
 
   // Perform all the edits at once.
-  editor.edit(
+  return editor.edit(
     edit => edits.forEach(
       // Replace the spaces (maybe empty) with our replacement (maybe empty, but
       // not at the same time that `erasure` is empty).
@@ -152,7 +170,7 @@ function fixupWhitespace()
       {
         // No.  Just complain about it generically, since that's all we know.
         vscode.window.showWarningMessage("Edit failed");
-        return;
+        return success;
       }
 
       // Yes.  Consider whether we need to adjust the cursor.
@@ -182,7 +200,7 @@ function fixupWhitespace()
           `Not adjusting cursors: saw ${editor.selections.length} expected `
           + edits.length
         );
-        return;
+        return false;
       }
 
       // Yes.  To move any cursor, we must set the entire selections array at
@@ -231,6 +249,9 @@ function fixupWhitespace()
       
       // Set 'em all at once.
       editor.selections = newSelections;
+
+      // We did it.
+      return true;
     },
 
     // onRejected.
@@ -241,7 +262,8 @@ function fixupWhitespace()
         // The user can see our extension identity if they want to, but we
         // repeat it here so it's clearer what is going on.
         "fixup-whitespace: Unsupported edit: " + reason
-        );
+      );
+      return false;
     }
   );
 }
@@ -250,13 +272,20 @@ function fixupWhitespace()
 export function activate(context: vscode.ExtensionContext) 
 {
   // Define the command mappings.
-	let disposable = vscode.commands.registerCommand(
+  let disposable = vscode.commands.registerCommand(
     'emacs-fixup-whitespace.fixupWhitespace', 
-    () => { fixupWhitespace(); }
-	);
+    () => { return fixupWhitespace(); }
+  );
 
   // Provide the commands to the context.
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
+
+  // TODO: REMOVE
+  disposable = vscode.commands.registerCommand(
+    'emacs-fixup-whitespace.testCommand', 
+    () => { return testCommand(); }
+  );
+  context.subscriptions.push(disposable);
 }
 
 // No-op.
