@@ -198,39 +198,48 @@ function fixupWhitespace(): Thenable<boolean>
       let newSelections: vscode.Selection[] = [];
       for(let i = 0; i < editor.selections.length; ++i)
       {
+        // Alias the edit and selection.
+        const edit = edits[i];
+        const selection = editor.selections[i];
+
+        // Adjust the active cursor position as needed.
+        const active = selection.active.translate(
+          // We never move the cursor to a different line.
+          0,
+          
+          // We move the cursor to the left iff we erased anything other
+          // than 1 space (when the cursor wasn't sitting on the first
+          // erased space [a quirk, since it's still there now]) . . .
+          (
+            (
+              (edit.erasure.end.character - edit.erasure.start.character) !== 1
+              && edit.prefixTrimSize !== 0
+            )
+            // . . . or we erased exactly 1 character and it was all in the
+            // prefix (a quirky special case) . . .
+            || edit.prefixTrimSize === 1
+          )
+          // . . . and we actually inserted anything.  (This second
+          // conditional happens via our replacement.length being zero.)
+          //
+          // Such a condition means that TextEditor moved the cursor to the
+          // end of a non-empty replacement, and we must move it back.
+          //
+          ? -(edit.replacement.length)
+          : 0
+        );
+
+        // Save the new selection in our replacement array.
         newSelections.push(
           new vscode.Selection(
-            // Leave the anchor unchanged.  This means that the selections that
-            // the user had (to extant cursors) remain intact.
-            editor.selections[i].anchor,
+            // Iff the existing selection is empty before we move the cursor,
+            // then set both the active and anchor to the new position (so we
+            // still have an empty selection).  Otherwise, leave the anchor
+            // alone so existing selections remain.
+            selection.isEmpty ? active : selection.anchor,
 
-            // Adjust the active cursor position as needed.
-            editor.selections[i].active.translate(
-              // We never move the cursor to a different line.
-              0,
-
-              // We move the cursor to the left iff we erased anything other
-              // than 1 space (when the cursor wasn't sitting on the first
-              // erased space [a quirk, since it's still there now]) . . .
-              (
-                (
-                  (edits[i].erasure.end.character 
-                  - edits[i].erasure.start.character) !== 1
-                  && edits[i].prefixTrimSize !== 0
-                )
-              // . . . or we erased exactly 1 character and it was all in the
-              // prefix (a quirky special case) . . .
-                || edits[i].prefixTrimSize === 1
-              )
-              // . . . and we actually inserted anything.  (This second
-              // conditional happens via our replacement.length being zero.)
-              //
-              // Such a condition means that TextEditor moved the cursor to the
-              // end of a non-empty replacement, and we must move it back.
-              //
-              ? -(edits[i].replacement.length)
-              : 0
-            )
+            // Always use the new active position that we just calculated.
+            active
           )
         );
       }

@@ -76,6 +76,8 @@ function checkCursor(
   const selection = editor.selections[0];
   assert.strictEqual(selection.active.line, lineIndex);
   assert.strictEqual(selection.active.character, character);
+  assert.strictEqual(selection.anchor.line, lineIndex);
+  assert.strictEqual(selection.anchor.character, character);
   return true;
 }
 
