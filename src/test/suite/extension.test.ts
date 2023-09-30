@@ -480,5 +480,68 @@ suite('single cursor', () => {
       // case.  It's not clear why it gets it wrong.
       assert.ok(checkCursor(editor, line, 24, true));
     }
+
+    // Line 14: A line with spaces at the end from the last space on the line.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(13, 0));
+      assert.strictEqual(line.text, orig[3]);
+      const start = line.range.end;
+
+      // From the last space.
+      assert.strictEqual(
+        await runSingleLine(editor, line.range.end.translate(0, -1)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line, 24));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 24)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+    }
+
+    // Line 15: A line with spaces at the end from the middle of those spaces.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(14, 0));
+      assert.strictEqual(line.text, orig[3]);
+      const start = line.range.end;
+
+      // From the not-the-last space.
+      assert.strictEqual(
+        await runSingleLine(editor, line.range.end.translate(0, -3)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line, 24));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 24)),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+    }
+
+    // Line 16: A line with spaces at the end from the first of those spaces.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(15, 0));
+      assert.strictEqual(line.text, orig[3]);
+      const start = line.range.end;
+
+      // // From the first such space.
+      // assert.strictEqual(
+      //   await runSingleLine(editor, start.translate(0, 24)),
+      //   fixed[3]
+      // );
+      // assert.ok(checkCursor(editor, line, 24));
+      // // Repeat.
+      // assert.strictEqual(
+      //   await runSingleLine(editor, start.translate(0, 24)),
+      //   fixed[3]
+      // );
+      // assert.ok(checkCursor(editor, line, 24, true)); // Normalized!
+    }
   });
 });
