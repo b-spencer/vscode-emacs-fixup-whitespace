@@ -439,20 +439,20 @@ suite('single cursor', () => {
       assert.ok(checkCursor(editor, line, 0));
     }
 
-    // Line 13: A line with spaces at the end from the first such space.
-    // {
-    //   // Get the line.
-    //   const line = editor.document.lineAt(new vscode.Position(12, 0));
-    //   assert.strictEqual(line.text, orig[3]);
-    //   const start = line.range.start;
+    // Line 13: A line with spaces at the end from the last such space.
+    {
+      // Get the line.
+      const line = editor.document.lineAt(new vscode.Position(12, 0));
+      assert.strictEqual(line.text, orig[3]);
+      const end = line.range.end;
 
-    //   // From the first trailing space position.
-    //   assert.strictEqual(
-    //     await runSingleLine(editor, start.translate(0, 24)),
-    //     fixed[3]
-    //   );
-    //   assert.ok(checkCursor(editor, line, 24));
-    //   // Repeat.
-    // }
+      // From the first trailing space position.
+      assert.strictEqual(
+        await runSingleLine(editor, end),
+        fixed[3]
+      );
+      assert.ok(checkCursor(editor, line, 24));
+      // Repeat.
+    }
   });
 });
