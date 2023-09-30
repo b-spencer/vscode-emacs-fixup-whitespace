@@ -77,9 +77,9 @@ function checkCursor(
 }
 
 //------------------------------------------------------------------------------
-// Simple test cases.
+// Single cursor test cases.
 
-suite('simple', () => {
+suite('single cursor', () => {
 
   test('pass 1', async () => {
     // TODO: Can we do this for the suite and then make each test case use the
@@ -135,6 +135,20 @@ suite('simple', () => {
       // Running the command in the first space has no effect.
       assert.strictEqual(
         await runSingleLine(editor, start.translate(0, 5)),
+        line.text
+      );
+      assert.ok(checkCursor(editor, line, 5));
+      // Repeat.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 5)),
+        line.text
+      );
+      assert.ok(checkCursor(editor, line, 5));
+
+      // Running the command in the first after-space doesn't change the line,
+      // but does move the cursor into the space.
+      assert.strictEqual(
+        await runSingleLine(editor, start.translate(0, 6)),
         line.text
       );
       assert.ok(checkCursor(editor, line, 5));
