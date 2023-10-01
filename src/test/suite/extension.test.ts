@@ -523,5 +523,28 @@ suite('single cursor', () => {
       );
       assert.ok(checkCursor(editor, line(), 24));
     }
+
+    // Line 17: A line with spaces at the end from the last non-space.
+    {
+      // Get the line.
+      const line = () => lineAt(16);
+      assert.strictEqual(line().text, orig[3]);
+
+      assert.strictEqual(
+        await runSingleLine(editor, line().range.start.translate(0, 23)),
+        // This inserts a space before the '.'.
+        "This has space after it .       "
+      );
+      // And it puts the cursor in that space.
+      assert.ok(checkCursor(editor, line(), 23));
+      // Repeat from the new '.' location.
+      assert.strictEqual(
+        await runSingleLine(editor, line().range.start.translate(0, 24)),
+        // It remains the same
+        "This has space after it .       "
+      );
+      // And moves the cursor back to the space.
+      assert.ok(checkCursor(editor, line(), 23));
+    }
   });
 });
