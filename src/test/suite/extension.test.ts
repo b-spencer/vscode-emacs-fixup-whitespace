@@ -711,9 +711,45 @@ suite('main', () => {
         ),
         fixed[0]
       );
-      // The selection is just the one space we inserted in the replace.
-      assert.ok(checkCursor(editor, line(), 17, 18));
+      // Collapses.
+      assert.ok(checkCursor(editor, line(), 17));
     }
 
+    // Line 9: Selection entirely within the space and not on its edges.
+    {
+      // Get the line.
+      const line = () => lineAt(8);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 26),
+          line().range.start.translate(0, 19)
+        ),
+        fixed[0]
+      );
+      // Collapses.
+      assert.ok(checkCursor(editor, line(), 17));
+    }
+
+    // Line 10: Reverse selection entirely within the space and not on its
+    // edges.
+    {
+      // Get the line.
+      const line = () => lineAt(9);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 19),
+          line().range.start.translate(0, 26)
+        ),
+        fixed[0]
+      );
+      // Collapses.
+      assert.ok(checkCursor(editor, line(), 17));
+    }
   });
 });
