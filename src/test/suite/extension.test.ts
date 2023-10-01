@@ -32,13 +32,14 @@ async function openTestFile(name: string): Promise<vscode.TextEditor>
 // resulting line.  No selection active.
 async function runSingleLine(
   editor: vscode.TextEditor, 
+  // GOTCHA: Reversed from normal API order to facilitate defaults.
   cursor: vscode.Position,
   anchor?: vscode.Position): Promise<string>
 {
   // Move the cursor to the specified position, with either no selected region
   // or the specified selection anchor.
   const newSelections: vscode.Selection[] = [
-    new vscode.Selection(cursor, anchor !== undefined ? anchor : cursor)
+    new vscode.Selection(anchor !== undefined ? anchor : cursor, cursor)
   ];
   editor.selections = newSelections;
 
@@ -62,11 +63,13 @@ async function runSingleLine(
 }
 
 // Check that there is one cursor position in `editor` and it is `line` at
-// `character`, with no region selected.
+// `character`, with no region selected, or if `anchorCharacter` is specified, a
+// selection on the same line from `anchorCharacter`.
 function checkCursor(
   editor: vscode.TextEditor, 
   line: vscode.TextLine, 
-  character: number): boolean
+  character: number,
+  anchorCharacter?: number): boolean
 {
   // There's exactly one selection.
   assert.strictEqual(editor.selections.length, 1);
@@ -81,7 +84,11 @@ function checkCursor(
   assert.strictEqual(selection.active.line, lineIndex, "active line");
   assert.strictEqual(selection.active.character, character, "active char");
   assert.strictEqual(selection.anchor.line, lineIndex), "anchor line";
-  assert.strictEqual(selection.anchor.character, character, "anchor char");
+  assert.strictEqual(
+    selection.anchor.character, 
+    anchorCharacter !== undefined ? anchorCharacter : character, 
+    "anchor char"
+  );
   return true;
 }
 
@@ -566,11 +573,21 @@ suite('main', () => {
     function lineAt(index: number): vscode.TextLine
     { return lineAtEditor(editor, index); }
 
-    // Line 1: Selection from start into area.
+    // Line 1: Selection from start into first space.
     {
       // Get the line.
       const line = () => lineAt(0);
       assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 17),
+          line().range.start
+        ),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line(), 17, 0));
     }
   });
 });
