@@ -1,0 +1,17 @@
+There is too much            space here.
+There is too much            space here.
+There is too much            space here.
+There is too much            space here.
+
+There is spacemissing here.
+ 
+ 
+      This has space before it.
+      This has space before it.
+      This has space before it.
+      This has space before it.
+This has space after it.       
+This has space after it.       
+This has space after it.       
+This has space after it.       
+This has space after it.       

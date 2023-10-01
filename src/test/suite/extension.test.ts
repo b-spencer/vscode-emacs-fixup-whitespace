@@ -32,11 +32,13 @@ async function openTestFile(name: string): Promise<vscode.TextEditor>
 // resulting line.  No selection active.
 async function runSingleLine(
   editor: vscode.TextEditor, 
-  cursor: vscode.Position): Promise<string>
+  cursor: vscode.Position,
+  anchor?: vscode.Position): Promise<string>
 {
-  // Move the cursor to the specified position, with no selected region.
+  // Move the cursor to the specified position, with either no selected region
+  // or the specified selection anchor.
   const newSelections: vscode.Selection[] = [
-    new vscode.Selection(cursor, cursor)
+    new vscode.Selection(cursor, anchor !== undefined ? anchor : cursor)
   ];
   editor.selections = newSelections;
 
@@ -86,7 +88,7 @@ function checkCursor(
 //------------------------------------------------------------------------------
 // Single cursor test cases.
 
-suite('single cursor', () => {
+suite('main', () => {
 
   // The original lines.
   const orig = [
@@ -124,11 +126,11 @@ suite('single cursor', () => {
     return editor.document.lineAt(new vscode.Position(index, 0));
   }
   
-  test('pass 1', async () => {
+  test('single', async () => {
     // Mocha doesn't seem to support async functions inside suite() but does
     // support them here, so we clumsily lump all our test cases that use this
     // file together.
-    const editor = await openTestFile("simple.txt");
+    const editor = await openTestFile("single.txt");
 
     // Bind lineAt() to the current editor.
     function lineAt(index: number): vscode.TextLine
@@ -551,6 +553,24 @@ suite('single cursor', () => {
       );
       // And moves the cursor back to the space.
       assert.ok(checkCursor(editor, line(), 23));
+    }
+
+    // Finally, close the editor.
+    
+  });
+
+  test('single-selection', async () => {
+    const editor = await openTestFile("single-selection.txt");
+
+    // Bind lineAt() to the current editor.
+    function lineAt(index: number): vscode.TextLine
+    { return lineAtEditor(editor, index); }
+
+    // Line 1: Selection from start into area.
+    {
+      // Get the line.
+      const line = () => lineAt(0);
+      assert.strictEqual(line().text, orig[0]);
     }
   });
 });
