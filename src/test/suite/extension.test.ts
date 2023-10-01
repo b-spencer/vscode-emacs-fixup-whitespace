@@ -751,5 +751,25 @@ suite('main', () => {
       // Collapses.
       assert.ok(checkCursor(editor, line(), 17));
     }
+
+    // Line 11: The selection anchor is after the spaces and its position is
+    // adjusted.
+    {
+      // Get the line.
+      const line = () => lineAt(10);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          // Includes the "spa" of "space".
+          line().range.start.translate(0, 19),
+          line().range.start.translate(0, 32)
+        ),
+        fixed[0]
+      );
+      // Still includes the "spa" of the now-moved "space".
+      assert.ok(checkCursor(editor, line(), 17, 21));
+    }
   });
 });
