@@ -89,8 +89,9 @@ function checkCursor(
 suite('single cursor', () => {
 
   test('pass 1', async () => {
-    // TODO: Can we do this for the suite and then make each test case use the
-    // existing document?
+    // Mocha doesn't seem to support async functions inside suite() but does
+    // support them here, so we clumsily lump all our test cases that use this
+    // file together.
     const editor = await openTestFile("simple.txt");
 
     // Return the line at `index`.
@@ -127,314 +128,300 @@ suite('single cursor', () => {
       "This has space after it.",
     ];
 
-    // TODO: FIX by using line() always.
-
     // Line 1: Start, end no-ops and first space of multiple.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(0, 0));
-      assert.strictEqual(line.text, orig[0]);
-      const start = line.range.start;
-      const lineIndex = line.range.start.line;
+      const line = () => lineAt(0);
+      assert.strictEqual(line().text, orig[0]);
 
-      // Running the command at the start has no effect.
+      // Running the command at the line start has no effect.
       assert.strictEqual(
-        await runSingleLine(editor, start),
-        line.text
+        await runSingleLine(editor, line().range.start),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
-        line.text
+        await runSingleLine(editor, line().range.start),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
 
       // Running the command at the end has no effect.
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end),
-        line.text
+        await runSingleLine(editor, line().range.end),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, line.range.end.character));
+      assert.ok(checkCursor(editor, line(), line().range.end.character));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end),
-        line.text
+        await runSingleLine(editor, line().range.end),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, line.range.end.character));
+      assert.ok(checkCursor(editor, line(), line().range.end.character));
 
       // Running the command in the first space has no effect.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 5)),
-        line.text
+        await runSingleLine(editor, line().range.start.translate(0, 5)),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 5));
+      assert.ok(checkCursor(editor, line(), 5));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 5)),
-        line.text
+        await runSingleLine(editor, line().range.start.translate(0, 5)),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 5));
+      assert.ok(checkCursor(editor, line(), 5));
 
       // Running the command in the first after-space doesn't change the line,
       // but does move the cursor into the space.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 6)),
-        line.text
+        await runSingleLine(editor, line().range.start.translate(0, 6)),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 5));
+      assert.ok(checkCursor(editor, line(), 5));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 5)),
-        line.text
+        await runSingleLine(editor, line().range.start.translate(0, 5)),
+        orig[0]
       );
-      assert.ok(checkCursor(editor, line, 5));
+      assert.ok(checkCursor(editor, line(), 5));
       
       // Running it in the first space of the long part works.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
 
       // Running it again in the same position makes no difference.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
     }
 
     // Line 2: Second space of multiple.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(1, 0));
-      assert.strictEqual(line.text, orig[0]);
-      const start = line.range.start;
+      const line = () => lineAt(1);
+      assert.strictEqual(line().text, orig[0]);
 
       // Running it in the second space of the long part works, but moves the
       // cursor back.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 18)),
+        await runSingleLine(editor, line().range.start.translate(0, 18)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
 
       // Running it again in the single space works.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
     }
 
     // Line 3: Last space of multiple.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(2, 0));
-      assert.strictEqual(line.text, orig[0]);
-      const start = line.range.start;
+      const line = () => lineAt(2);
+      assert.strictEqual(line().text, orig[0]);
 
       // Run it from the last space of many.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 28)),
+        await runSingleLine(editor, line().range.start.translate(0, 28)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
 
       // Running it again in the single space works.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
     }
 
     // Line 4: One-past-the-last space of multiple.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(3, 0));
-      assert.strictEqual(line.text, orig[0]);
-      const start = line.range.start;
+      const line = () => lineAt(3);
+      assert.strictEqual(line().text, orig[0]);
 
       // Run it from the one-past-the-last space of many.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 29)),
+        await runSingleLine(editor, line().range.start.translate(0, 29)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
 
       // Running it again in the single space works.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 17)),
+        await runSingleLine(editor, line().range.start.translate(0, 17)),
         fixed[0]
       );
-      assert.ok(checkCursor(editor, line, 17));
+      assert.ok(checkCursor(editor, line(), 17));
     }
 
     // Line 5: Empty.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(4, 0));
-      assert.strictEqual(line.text, "");
-      const start = line.range.start;
+      const line = () => lineAt(4);
+      assert.strictEqual(line().text, "");
 
-      // Run it from the only position on this line.
+      // Run it from the only position on this line().
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 6: Inserting a single space.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(5, 0));
-      assert.strictEqual(line.text, orig[1]);
-      const start = line.range.start;
+      const line = () => lineAt(5);
+      assert.strictEqual(line().text, orig[1]);
 
       // Run it from between the words.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 14)),
+        await runSingleLine(editor, line().range.start.translate(0, 14)),
         fixed[1]
       );
-      assert.ok(checkCursor(editor, line, 14));
+      assert.ok(checkCursor(editor, line(), 14));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 14)),
+        await runSingleLine(editor, line().range.start.translate(0, 14)),
         fixed[1]
       );
-      assert.ok(checkCursor(editor, line, 14));
+      assert.ok(checkCursor(editor, line(), 14));
     }
 
     // Line 7: A line with a single space on it.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(6, 0));
-      assert.strictEqual(line.text, " ");
-      const start = line.range.start;
+      const line = () => lineAt(6);
+      assert.strictEqual(line().text, " ");
 
-      // Run it from the line start.
+      // Run it from the line() start.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 8: A line with a single space, run from the end.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(7, 0));
-      assert.strictEqual(line.text, " ");
-      const start = line.range.start;
+      const line = () => lineAt(7);
+      assert.strictEqual(line().text, " ");
 
-      // Run it from the line start.
+      // Run it from the line() start.
       assert.strictEqual(
-        await runSingleLine(editor, line.range.end),
+        await runSingleLine(editor, line().range.end),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         ""
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 9: A line with spaces at the start from the start.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(8, 0));
-      assert.strictEqual(line.text, orig[2]);
-      const start = line.range.start;
+      const line = () => lineAt(8);
+      assert.strictEqual(line().text, orig[2]);
 
       // From the start position.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 10: A line with spaces at the start from the middle.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(9, 0));
-      assert.strictEqual(line.text, orig[2]);
-      const start = line.range.start;
+      const line = () => lineAt(9);
+      assert.strictEqual(line().text, orig[2]);
 
       // From the a middle space position.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 1)),
+        await runSingleLine(editor, line().range.start.translate(0, 1)),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 11: A line with spaces at the start from the last space.
     {
       // Get the line.
-      const line = editor.document.lineAt(new vscode.Position(10, 0));
-      assert.strictEqual(line.text, orig[2]);
-      const start = line.range.start;
+      const line = () => lineAt(10);
+      assert.strictEqual(line().text, orig[2]);
 
       // From the last space position.
       assert.strictEqual(
-        await runSingleLine(editor, start.translate(0, 5)),
+        await runSingleLine(editor, line().range.start.translate(0, 5)),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
       // Repeat.
       assert.strictEqual(
-        await runSingleLine(editor, start),
+        await runSingleLine(editor, line().range.start),
         fixed[2]
       );
-      assert.ok(checkCursor(editor, line, 0));
+      assert.ok(checkCursor(editor, line(), 0));
     }
 
     // Line 12: A line with spaces at the start from the past-the-last space.
