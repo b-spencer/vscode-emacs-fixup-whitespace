@@ -62,6 +62,36 @@ async function runSingleLine(
   );
 }
 
+// Check that there is one cursor position in `editor` and it is `line` at
+// `character`, with no region selected, or if `anchorCharacter` is specified, a
+// selection on the same line from `anchorCharacter`.
+function checkCursor(
+  editor: vscode.TextEditor, 
+  line: vscode.TextLine, 
+  character: number,
+  anchorCharacter?: number): boolean
+{
+  // There's exactly one selection.
+  assert.strictEqual(editor.selections.length, 1);
+
+  // Get the primary selection.
+  const selection = editor.selections[0];
+
+  // For brevity.
+  const lineIndex = line.range.start.line;
+
+  // Check 'em.
+  assert.strictEqual(selection.active.line, lineIndex, "active line");
+  assert.strictEqual(selection.active.character, character, "active char");
+  assert.strictEqual(selection.anchor.line, lineIndex), "anchor line";
+  assert.strictEqual(
+    selection.anchor.character, 
+    anchorCharacter !== undefined ? anchorCharacter : character, 
+    "anchor char"
+  );
+  return true;
+}
+
 // Run the fixup-whitespace command at all cursor positions given.
 async function runMultipleLines(
   editor: vscode.TextEditor,
@@ -91,36 +121,6 @@ async function runMultipleLines(
       return result;
     }
   );
-}
-
-// Check that there is one cursor position in `editor` and it is `line` at
-// `character`, with no region selected, or if `anchorCharacter` is specified, a
-// selection on the same line from `anchorCharacter`.
-function checkCursor(
-  editor: vscode.TextEditor, 
-  line: vscode.TextLine, 
-  character: number,
-  anchorCharacter?: number): boolean
-{
-  // There's exactly one selection.
-  assert.strictEqual(editor.selections.length, 1);
-
-  // Get the primary selection.
-  const selection = editor.selections[0];
-
-  // For brevity.
-  const lineIndex = line.range.start.line;
-
-  // Check 'em.
-  assert.strictEqual(selection.active.line, lineIndex, "active line");
-  assert.strictEqual(selection.active.character, character, "active char");
-  assert.strictEqual(selection.anchor.line, lineIndex), "anchor line";
-  assert.strictEqual(
-    selection.anchor.character, 
-    anchorCharacter !== undefined ? anchorCharacter : character, 
-    "anchor char"
-  );
-  return true;
 }
 
 //------------------------------------------------------------------------------
