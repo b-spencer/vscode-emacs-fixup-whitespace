@@ -88,45 +88,51 @@ function checkCursor(
 
 suite('single cursor', () => {
 
+  // The original lines.
+  const orig = [
+    // Lines 1 through 4.
+    "There is too much            space here.",
+    // Line 6.
+    "There is spacemissing here.",
+    // Lines 9 through 12.
+    "      This has space before it.",
+    // Lines 13 through 15.
+    "This has space after it.       ",
+  ];
+
+  // The fixed lines.
+  const fixed = [
+    // Lines 1 through 4.
+    "There is too much space here.",
+    // Line 6.
+    "There is space missing here.",
+    // Lines 9 through 12.
+    "This has space before it.",
+    // Lines 13 through 15.
+    "This has space after it.",
+  ];
+
+  // Return the line at `index`.
+  //
+  // It's important to re-fetch the line after ever modification for proper
+  // testing.  The cursor positions move around during the edits.
+  //
+  function lineAtEditor(
+    editor: vscode.TextEditor,
+    index: number): vscode.TextLine
+  {
+    return editor.document.lineAt(new vscode.Position(index, 0));
+  }
+  
   test('pass 1', async () => {
     // Mocha doesn't seem to support async functions inside suite() but does
     // support them here, so we clumsily lump all our test cases that use this
     // file together.
     const editor = await openTestFile("simple.txt");
 
-    // Return the line at `index`.
-    //
-    // It's important to re-fetch the line after ever modification for proper
-    // testing.  The cursor positions move around during the edits.
-    //
+    // Bind lineAt() to the current editor.
     function lineAt(index: number): vscode.TextLine
-    {
-      return editor.document.lineAt(new vscode.Position(index, 0));
-    }
-
-    // The original lines.
-    const orig = [
-      // Lines 1 through 4.
-      "There is too much            space here.",
-      // Line 6.
-      "There is spacemissing here.",
-      // Lines 9 through 12.
-      "      This has space before it.",
-      // Lines 13 through 15.
-      "This has space after it.       ",
-    ];
-
-    // The fixed lines.
-    const fixed = [
-      // Lines 1 through 4.
-      "There is too much space here.",
-      // Line 6.
-      "There is space missing here.",
-      // Lines 9 through 12.
-      "This has space before it.",
-      // Lines 13 through 15.
-      "This has space after it.",
-    ];
+    { return lineAtEditor(editor, index); }
 
     // Line 1: Start, end no-ops and first space of multiple.
     {
