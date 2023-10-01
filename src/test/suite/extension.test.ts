@@ -589,5 +589,131 @@ suite('main', () => {
       );
       assert.ok(checkCursor(editor, line(), 17, 0));
     }
+
+    // Line 2: Selection from end into middle space.
+    {
+      // Get the line.
+      const line = () => lineAt(1);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 18),
+          line().range.end
+        ),
+        fixed[0]
+      );
+      assert.ok(checkCursor(editor, line(), 17, line().range.end.character));
+    }
+
+    // Line 3: Selection from on the last space to the first.
+    {
+      // Get the line.
+      const line = () => lineAt(2);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 17),
+          line().range.start.translate(0, 28)
+        ),
+        fixed[0]
+      );
+      // The selection mostly collapses since its region was replaced.
+      assert.ok(checkCursor(editor, line(), 17, 18));
+    }
+
+    // Line 4: Selection from on almost last space to first.
+    {
+      // Get the line.
+      const line = () => lineAt(3);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 17),
+          line().range.start.translate(0, 27)
+        ),
+        fixed[0]
+      );
+      // The selection mostly collapses since its region was replaced.
+      assert.ok(checkCursor(editor, line(), 17, 18));
+    }
+
+    // Line 5: Selection from one last the last space to first.
+    {
+      // Get the line.
+      const line = () => lineAt(4);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 17),
+          line().range.start.translate(0, 28)
+        ),
+        fixed[0]
+      );
+      // The selection mostly collapses since its region was replaced.
+      assert.ok(checkCursor(editor, line(), 17, 18));
+    }
+
+    // Line 6: Selection from the first to almost the last space.
+    {
+      // Get the line.
+      const line = () => lineAt(5);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 27),
+          line().range.start.translate(0, 17)
+        ),
+        fixed[0]
+      );
+      // The selection collapses because we deleted all of its spaces.
+      assert.ok(checkCursor(editor, line(), 17));
+    }
+
+    // Line 7: Selection from the first to on the last space.
+    {
+      // Get the line.
+      const line = () => lineAt(6);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 28),
+          line().range.start.translate(0, 17)
+        ),
+        fixed[0]
+      );
+      // The selection completely collapses.
+      assert.ok(checkCursor(editor, line(), 17));
+    }
+
+    // Line 8: Selection from the first to after the last space.
+    {
+      // Get the line.
+      const line = () => lineAt(7);
+      assert.strictEqual(line().text, orig[0]);
+
+      assert.strictEqual(
+        await runSingleLine(
+          editor, 
+          line().range.start.translate(0, 29),
+          line().range.start.translate(0, 17)
+        ),
+        fixed[0]
+      );
+      // The selection is just the one space we inserted in the replace.
+      assert.ok(checkCursor(editor, line(), 17, 18));
+    }
+
   });
 });
