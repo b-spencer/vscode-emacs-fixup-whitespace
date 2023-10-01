@@ -62,6 +62,37 @@ async function runSingleLine(
   );
 }
 
+// Run the fixup-whitespace command at all cursor positions given.
+async function runMultipleLines(
+  editor: vscode.TextEditor,
+  cursors: vscode.Position[]): Promise<string[]>
+{
+  // Set the new positions.
+  const newSelections: vscode.Selection[] = [];
+  cursors.forEach(
+    cursor => newSelections.push(new vscode.Selection(cursor, cursor))
+  );
+  editor.selections = newSelections;
+
+  // Run the command.
+  return vscode.commands.executeCommand(
+    "emacs-fixup-whitespace.fixupWhitespace"
+  ).then(
+    // onFulfilled.
+    success => 
+    {
+      assert.strictEqual(success, true);
+      
+      // Get the resulting lines.
+      const result: string[] = [];
+      cursors.forEach(
+        cursor => result.push(editor.document.lineAt(cursor.line).text)
+      );
+      return result;
+    }
+  );
+}
+
 // Check that there is one cursor position in `editor` and it is `line` at
 // `character`, with no region selected, or if `anchorCharacter` is specified, a
 // selection on the same line from `anchorCharacter`.
@@ -132,7 +163,8 @@ suite('main', () => {
   {
     return editor.document.lineAt(new vscode.Position(index, 0));
   }
-  
+
+  // Test single cursor and the basic adjustments.
   test('single', async () => {
     // Mocha doesn't seem to support async functions inside suite() but does
     // support them here, so we clumsily lump all our test cases that use this
@@ -566,6 +598,11 @@ suite('main', () => {
     
   });
 
+  // Test selection adjustments (with a single cursor).
+  //
+  // All of the selection adjustments are actually done by the TextEditor.edit()
+  // function, so we're just checking that we didn't mess it up.
+  //
   test('single-selection', async () => {
     const editor = await openTestFile("single-selection.txt");
 
@@ -770,6 +807,40 @@ suite('main', () => {
       );
       // Still includes the "spa" of the now-moved "space".
       assert.ok(checkCursor(editor, line(), 17, 21));
+    }
+  });
+
+  // Test multiple cursors.
+  test('multiple', async () => {
+    const editor = await openTestFile("multiple.txt");
+
+    // Bind lineAt() to the current editor.
+    function lineAt(index: number): vscode.TextLine
+    { return lineAtEditor(editor, index); }
+
+    // Line 1-3: Start, end no-ops and first space of multiple.
+    {
+      // Check the lines
+      assert.strictEqual(lineAt(0).text, orig[0]);
+      assert.strictEqual(lineAt(1).text, orig[0]);
+      assert.strictEqual(lineAt(2).text, orig[0]);
+
+      // Fix them all at once.
+      assert.deepStrictEqual(
+        await runMultipleLines(
+          editor,
+          [
+            new vscode.Position(0, 19),
+            new vscode.Position(1, 19),
+            new vscode.Position(2, 19)
+          ],
+        ),
+        [
+          fixed[0],
+          fixed[0],
+          fixed[0]
+        ]
+      );
     }
   });
 });
