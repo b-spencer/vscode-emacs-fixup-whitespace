@@ -10,7 +10,7 @@ Checklist:
 
 5. vsce package and install locally and test manually.
 
-6. Commit and push.
+6. Commit and push.  Check what branch!
 
 7. Tag release on Github.
 
