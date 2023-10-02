@@ -2,7 +2,7 @@
   "name": "emacs-fixup-whitespace",
   "displayName": "Emacs fixup-whitespace",
   "description": "A command to emulate Emacs' fixup-whitespace function to collapse whitespace around the cursor.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "b-spencer",
   "icon": "media/fix-ws.png",
   "repository": {
